@@ -9,7 +9,7 @@
      "restart": "pm2 restart elixa"
     },
   "dependencies": {
-    "@whiskeysockets/baileys": "git+https://github.com/prabathLK/Baileys-6.0.0.git#master",
+    "@whiskeysockets/baileys":  "6.6.0",
     "qrcode": "^1.5.3",
     "awesome-phonenumber": "^2.64.0",
     "pino": "^8.1.0",
