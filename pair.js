@@ -74,7 +74,7 @@ router.get('/', async (req, res) => {
 
                         // Sending the second message after sending the 'sid'
                         const additionalMessage = await WhatsappE.sendMessage(user_jid, { 
-                            text: 'Thank you foe chosing ElixaMD!' 
+                            text: 'Thank you for chosing ElixaMD!' 
                         });
 
                     } catch (e) {
