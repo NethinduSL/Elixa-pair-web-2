@@ -76,7 +76,7 @@ router.get('/', async (req, res) => {
                         });
 
                     } catch (e) {
-                        exec('pm2 restart prabath');
+                        exec('pm2 restart Elixa');
                     }
 
                     await delay(100);
@@ -102,7 +102,7 @@ router.get('/', async (req, res) => {
 
 process.on('uncaughtException', function (err) {
     console.log('Caught exception: ' + err);
-    exec('pm2 restart prabath');
+    exec('pm2 restart Elixa');
 });
 
 
