@@ -169,60 +169,98 @@
   src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.0.0-alpha.1/axios.min.js"
   ></script>
   <script>
-    
     let a = document.getElementById("pair");
-    let b = document.getElementById("submit");
-    let c = document.getElementById("number");
-    let box = document.getElementById("box");
+let b = document.getElementById("submit");
+let c = document.getElementById("number");
+let box = document.getElementById("box");
+let timeoutHandler = null; // To manage the timeout
+let intervalHandler = null; // To manage periodic reminders
 
-    async function Copy() {
-      let text = document.getElementById("copy").innerText;
-      let obj = document.getElementById("copy");
-      await navigator.clipboard.writeText(obj.innerText.replace('CODE: ', ''));
-      obj.innerText = "✔️ COPIED";
-      obj.style = "color:red;font-weight:bold";
-      obj.size = "5";
-      setTimeout(() => {
-        obj.innerText = text;
-        obj.style = "color:white;font-weight-bold";
-        obj.size = "5";
-      }, 500);
-    }
+async function Copy() {
+  let text = document.getElementById("copy").innerText;
+  let obj = document.getElementById("copy");
+  await navigator.clipboard.writeText(obj.innerText.replace('CODE: ', ''));
+  obj.innerText = "✔️ COPIED";
+  obj.style = "color:red;font-weight:bold";
+  obj.size = "5";
+  setTimeout(() => {
+    obj.innerText = text;
+    obj.style = "color:white;font-weight:bold";
+    obj.size = "5";
+  }, 500);
+}
 
-    b.addEventListener("click", async (e) => {
-      e.preventDefault();
-      if (!c.value) {
-        a.innerHTML = '<a style="color:black;font-weight:bold">❗Enter your whatsapp number with country code.</a><br><br>';
-      } else if (c.value.replace(/[^0-9]/g, "").length < 11) {
-        a.innerHTML = '<a style="color:black;font-weight:bold">❗Invalid number format. Please try again.</a><br><br>';
+b.addEventListener("click", async (e) => {
+  e.preventDefault();
+  
+  // Clear any existing timeout or interval
+  if (timeoutHandler) {
+    clearTimeout(timeoutHandler);
+    timeoutHandler = null;
+  }
+  if (intervalHandler) {
+    clearInterval(intervalHandler);
+    intervalHandler = null;
+  }
+
+  if (!c.value) {
+    a.innerHTML = '<a style="color:black;font-weight:bold">❗Enter your WhatsApp number with country code.</a><br><br>';
+  } else if (c.value.replace(/[^0-9]/g, "").length < 11) {
+    a.innerHTML = '<a style="color:black;font-weight:bold">❗Invalid number format. Please try again.</a><br><br>';
+  } else {
+    const bc = c.value.replace(/[^0-9]/g, "");
+    let bb = "";
+    let bbc = "";
+    const cc = bc.split('');
+    cc.map(a => {
+      bbc += a;
+      if (bbc.length == 3) {
+        bb += " " + a;
+      } else if (bbc.length == 8) {
+        bb += " " + a;
       } else {
-        const bc = c.value.replace(/[^0-9]/g, "");
-        let bb = "";
-        let bbc = "";
-        const cc = bc.split('');
-        cc.map(a => {
-          bbc += a;
-          if (bbc.length == 3) {
-            bb += " " + a;
-          } else if (bbc.length == 8) {
-            bb += " " + a;
-          } else {
-            bb += a;
-          }
-        });
-        c.type = "text";
-        c.value = "+" + bb;
-        c.style = "color:white;font-size:20px";
-        // Show the loading spinner
-        document.getElementById("loading-spinner").style.display = "block";
-        a.innerHTML = ''; // Clear the previous content
-        let { data } = await axios(`/code?number=${bc}`);
-        let code = data.code || "❗ Service Unavailable";
-        a.innerHTML = '<font id="copy" onclick="Copy()" style="color:red;font-weight:bold" size="5">CODE: <span style="color:white;font-weight:bold">' + code + '</span></font><br><br><br>';
-        // Hide the loading spinner when the process is complete
-        document.getElementById("loading-spinner").style.display = "none";
+        bb += a;
       }
     });
+    c.type = "text";
+    c.value = "+" + bb;
+    c.style = "color:white;font-size:20px";
+
+    // Show the loading spinner
+    document.getElementById("loading-spinner").style.display = "block";
+    a.innerHTML = ''; // Clear the previous content
+
+    try {
+      let { data } = await axios(`/code?number=${bc}`);
+      let code = data.code || "❗ Service Unavailable";
+
+      // Show the code
+      a.innerHTML = '<font id="copy" onclick="Copy()" style="color:red;font-weight:bold" size="5">CODE: <span style="color:white;font-weight:bold">' + code + '</span></font><br><br><br>';
+
+      // Start periodic reminders
+      intervalHandler = setInterval(() => {
+        a.innerHTML += '<p style="color:orange;font-weight:bold">⚠️ Reminder: Please pair using the provided code.</p>';
+      }, 30 * 1000); // Every 30 seconds
+
+      // Start a timeout to reset after 2 minutes
+      timeoutHandler = setTimeout(() => {
+        clearInterval(intervalHandler); // Stop reminders
+        intervalHandler = null;
+        a.innerHTML = '<a style="color:black;font-weight:bold">❗ Pairing timed out. Please try again.</a><br><br>';
+        c.value = ''; // Reset the input field
+        c.type = "tel";
+        c.style = "color:black;font-size:16px"; // Reset the style
+      }, 2 * 60 * 1000); // 2 minutes
+    } catch (error) {
+      a.innerHTML = '<a style="color:black;font-weight:bold">❗ Error: Unable to process your request.</a><br><br>';
+    } finally {
+      // Hide the loading spinner
+      document.getElementById("loading-spinner").style.display = "none";
+    }
+  }
+});
+
+    
   </script>
 </body>
 </html>
