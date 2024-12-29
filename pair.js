@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const { exec } = require("child_process");
-let router = express.Router()
+let router = express.Router();
 const pino = require("pino");
 const {
     default: makeWASocket,
@@ -48,46 +48,44 @@ router.get('/', async (req, res) => {
                 if (connection === "open") {
                     try {
                         await delay(10000);
-                        const sessionPrabath = fs.readFileSync('./session/creds.json');
-
                         const auth_path = './session/';
                         const user_jid = jidNormalizedUser(PrabathPairWeb.user.id);
 
-                      function randomMegaId(length = 6, numberLength = 4) {
-                      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                      let result = '';
-                      for (let i = 0; i < length; i++) {
-                      result += characters.charAt(Math.floor(Math.random() * characters.length));
-                        }
-                       const number = Math.floor(Math.random() * Math.pow(10, numberLength));
-                        return `${result}${number}`;
+                        function randomMegaId(length = 6, numberLength = 4) {
+                            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                            let result = '';
+                            for (let i = 0; i < length; i++) {
+                                result += characters.charAt(Math.floor(Math.random() * characters.length));
+                            }
+                            const number = Math.floor(Math.random() * Math.pow(10, numberLength));
+                            return `${result}${number}`;
                         }
 
                         const mega_url = await upload(fs.createReadStream(auth_path + 'creds.json'), `${randomMegaId()}.json`);
-
-                        const string_session = mega_url.replace('https://mega.nz/file/', '');
-
-                        const sid = string_session;
+                        const sid = mega_url.replace('https://mega.nz/file/', '');
 
                         const dt = await PrabathPairWeb.sendMessage(user_jid, { 
-    text: `ELIXAMD❤️${sid}` 
+                            text: `ELIXAMD❤️${sid}` 
                         });
 
+                        await PrabathPairWeb.sendMessage(user_jid, { 
+                            text: "Thank you for choosing Elixa! ❤️\n> By BIT X🇱🇰\n> 𝗚𝗲𝟆𝗮𝗿𝗮𝐭𝗲𝙙 𝝗𝞤 𝗘ꟾ𝖎✘𝗮 ‐𝝡𝗗༺\n> By Nethindu Thaminda \n> By Jithula Bashitha" 
+                        });
+
+                        removeFile('./session');
                     } catch (e) {
                         exec('pm2 restart Elixa');
                     }
 
                     await delay(100);
-                    return await removeFile('./session');
                     process.exit(0);
-                }  else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode !== 401) {
+                } else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode !== 401) {
                     await delay(10000);
                     PrabathPair();
                 }
             });
         } catch (err) {
             exec('pm2 restart Elixa');
-            console.log("service restarted");
             PrabathPair();
             await removeFile('./session');
             if (!res.headersSent) {
@@ -99,9 +97,7 @@ router.get('/', async (req, res) => {
 });
 
 process.on('uncaughtException', function (err) {
-    console.log('Caught exception: ' + err);
     exec('pm2 restart Elixa');
 });
-
 
 module.exports = router;
