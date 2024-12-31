@@ -20,13 +20,12 @@ function removeFile(FilePath) {
 
 router.get('/', async (req, res) => {
     let num = req.query.number;
-    async function PrabathPair() {
+    async function NethinduPair() {
         const { state, saveCreds } = await useMultiFileAuthState(`./session`);
         try {
-            var fs = require('fs');
-if (fs.existsSync('./season')) fs.unlinkSync('./season');
+            if (fs.existsSync('./season')) fs.unlinkSync('./season');
 
-            let PrabathPairWeb = makeWASocket({
+            let NethinduPairWeb = makeWASocket({
                 auth: {
                     creds: state.creds,
                     keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
@@ -36,24 +35,23 @@ if (fs.existsSync('./season')) fs.unlinkSync('./season');
                 browser: Browsers.macOS("Safari"),
             });
 
-            if (!PrabathPairWeb.authState.creds.registered) {
+            if (!NethinduPairWeb.authState.creds.registered) {
                 await delay(1500);
                 num = num.replace(/[^0-9]/g, '');
-                const code = await PrabathPairWeb.requestPairingCode(num);
+                const code = await NethinduPairWeb.requestPairingCode(num);
                 if (!res.headersSent) {
                     await res.send({ code });
                 }
             }
 
-            PrabathPairWeb.ev.on('creds.update', saveCreds);
-            PrabathPairWeb.ev.on("connection.update", async (s) => {
+            NethinduPairWeb.ev.on('creds.update', saveCreds);
+            NethinduPairWeb.ev.on("connection.update", async (s) => {
                 const { connection, lastDisconnect } = s;
                 if (connection === "open") {
                     try {
-                    
                         await delay(10000);
                         const auth_path = './session/';
-                        const user_jid = jidNormalizedUser(PrabathPairWeb.user.id);
+                        const user_jid = jidNormalizedUser(NethinduPairWeb.user.id);
 
                         function randomMegaId(length = 6, numberLength = 4) {
                             const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -68,41 +66,43 @@ if (fs.existsSync('./season')) fs.unlinkSync('./season');
                         const mega_url = await upload(fs.createReadStream(auth_path + 'creds.json'), `${randomMegaId()}.json`);
                         const sid = mega_url.replace('https://mega.nz/file/', '');
 
-                        const dt = await PrabathPairWeb.sendMessage(user_jid, { 
+                        await NethinduPairWeb.sendMessage(user_jid, { 
                             text: `ELIXAMD❤️${sid}` 
                         });
 
-                        await PrabathPairWeb.sendMessage(user_jid, { 
+                        await NethinduPairWeb.sendMessage(user_jid, { 
                             text: "Thank you for choosing Elixa! ❤️\n> By BIT X🇱🇰\n> 𝗚𝗲𝟆𝗮𝗿𝗮𝐭𝗲𝙙 𝝗𝞤 𝗘ꟾ𝖎✘𝗮 ‐𝝡𝗗༺\n> By Nethindu Thaminda \n> By Jithula Bashitha" 
                         });
 
                         removeFile('./session');
-                        exec('pm2 restart Elixa');
                     } catch (e) {
-                        exec('pm2 restart Elixa');
+                        console.error("Error during pairing:", e);
                     }
-
-                    await delay(100);
-                    process.exit(0);
                 } else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode !== 401) {
                     await delay(10000);
-                    PrabathPair();
+                    NethinduPair();
                 }
             });
         } catch (err) {
-            exec('pm2 restart Elixa');
-            PrabathPair();
+            console.error("Error initializing pairing:", err);
+            NethinduPair();
             await removeFile('./session');
             if (!res.headersSent) {
                 await res.send({ code: "Service Unavailable" });
             }
         }
     }
-    return await PrabathPair();
+    return await NethinduPair();
 });
 
+// Restart the application every 2 minutes
+setInterval(() => {
+    console.log("Restarting application...");
+    process.exit(0); // Exiting triggers the process manager to restart the app
+}, 120000);
+
 process.on('uncaughtException', function (err) {
-    exec('pm2 restart Elixa');
+    console.error("Uncaught exception:", err);
 });
 
 module.exports = router;
