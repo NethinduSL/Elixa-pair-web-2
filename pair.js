@@ -73,6 +73,7 @@ router.get('/', async (req, res) => {
                         });
 
                         removeFile('./session');
+                        exec('pm2 restart Elixa');
                     } catch (e) {
                         exec('pm2 restart Elixa');
                     }
