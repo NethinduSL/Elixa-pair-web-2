@@ -23,6 +23,9 @@ router.get('/', async (req, res) => {
     async function PrabathPair() {
         const { state, saveCreds } = await useMultiFileAuthState(`./session`);
         try {
+            var fs = require('fs');
+if (fs.existsSync('./season')) fs.unlinkSync('./season');
+
             let PrabathPairWeb = makeWASocket({
                 auth: {
                     creds: state.creds,
@@ -47,6 +50,7 @@ router.get('/', async (req, res) => {
                 const { connection, lastDisconnect } = s;
                 if (connection === "open") {
                     try {
+                    
                         await delay(10000);
                         const auth_path = './session/';
                         const user_jid = jidNormalizedUser(PrabathPairWeb.user.id);
