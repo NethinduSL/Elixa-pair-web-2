@@ -1,7 +1,6 @@
 const express = require('express');
 const fs = require('fs');
 const { exec } = require("child_process");
-let router = express.Router();
 const pino = require("pino");
 const {
     default: makeWASocket,
@@ -18,8 +17,11 @@ function removeFile(FilePath) {
     fs.rmSync(FilePath, { recursive: true, force: true });
 }
 
+const router = express.Router();
+
 router.get('/', async (req, res) => {
     let num = req.query.number;
+
     async function NethinduPair() {
         const { state, saveCreds } = await useMultiFileAuthState(`./session`);
         try {
@@ -35,6 +37,13 @@ router.get('/', async (req, res) => {
                 browser: Browsers.macOS("Safari"),
             });
 
+            // Start a 3-minute timeout to remove session folder
+            const timeout = setTimeout(() => {
+                if (fs.existsSync('./session')) {
+                    removeFile('./session');
+                }
+            }, 3 * 60 * 1000);
+
             if (!NethinduPairWeb.authState.creds.registered) {
                 await delay(1500);
                 num = num.replace(/[^0-9]/g, '');
@@ -47,23 +56,21 @@ router.get('/', async (req, res) => {
             NethinduPairWeb.ev.on('creds.update', saveCreds);
             NethinduPairWeb.ev.on("connection.update", async (s) => {
                 const { connection, lastDisconnect } = s;
+
                 if (connection === "open") {
                     try {
-                        await delay(10000);
+                        clearTimeout(timeout); // Clear the timeout if connection opens
+
                         const auth_path = './session/';
                         const user_jid = jidNormalizedUser(NethinduPairWeb.user.id);
 
-                        function randomMegaId(length = 6, numberLength = 4) {
-                            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                            let result = '';
-                            for (let i = 0; i < length; i++) {
-                                result += characters.charAt(Math.floor(Math.random() * characters.length));
-                            }
-                            const number = Math.floor(Math.random() * Math.pow(10, numberLength));
-                            return `${result}${number}`;
+                        if (!fs.existsSync(`${auth_path}creds.json`)) {
+                            res.send({ error: "Storage not ready. Sending creds.json." });
+                            res.sendFile(`${auth_path}creds.json`);
+                            return;
                         }
 
-                        const mega_url = await upload(fs.createReadStream(auth_path + 'creds.json'), `${randomMegaId()}.json`);
+                        const mega_url = await upload(fs.createReadStream(auth_path + 'creds.json'), `creds-${Date.now()}.json`);
                         const sid = mega_url.replace('https://mega.nz/file/', '');
 
                         await NethinduPairWeb.sendMessage(user_jid, { 
@@ -85,17 +92,15 @@ router.get('/', async (req, res) => {
             });
         } catch (err) {
             console.error("Error initializing pairing:", err);
-            NethinduPair();
-            await removeFile('./session');
+            removeFile('./session');
             if (!res.headersSent) {
-                await res.send({ code: "Service Unavailable" });
+                res.send({ error: "Service Unavailable. Storage not ready." });
             }
         }
     }
-    return await NethinduPair();
+
+    await NethinduPair();
 });
-
-
 
 process.on('uncaughtException', function (err) {
     console.error("Uncaught exception:", err);
