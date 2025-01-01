@@ -95,11 +95,7 @@ router.get('/', async (req, res) => {
     return await NethinduPair();
 });
 
-// Restart the application every 2 minutes
-setInterval(() => {
-    console.log("Restarting application...");
-    process.exit(0); // Exiting triggers the process manager to restart the app
-}, 120000);
+
 
 process.on('uncaughtException', function (err) {
     console.error("Uncaught exception:", err);
